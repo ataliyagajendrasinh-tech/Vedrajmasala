@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedraj Masala - Sales Order System</title>
+    <!-- PDF અને Excel માટેની લાઈબ્રેરીઓ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-green: #0d9e60;
+            --primary-yellow: #f4e11e;
+            --bg-color: #f4f4f4;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-green);
+            text-align: center;
+            padding: 20px;
+            border-bottom: 5px solid var(--primary-yellow);
+        }
+
+        header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: #e0f5e9;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #eee;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #555;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--primary-green);
+            border-bottom: 3px solid var(--primary-green);
+        }
+
+        .tab-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 5px rgba(13, 158, 96, 0.3);
+        }
+
+        .form-control[readonly] {
+            background-color: #f0f0f0;
+            color: #555;
+        }
+
+        .btn {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background-color: #0b7a4a;
+        }
+
+        .btn-yellow {
+            background-color: var(--primary-yellow);
+            color: #333;
+        }
+        
+        .btn-yellow:hover {
+            background-color: #d4c318;
+        }
+
+        .btn-pdf {
+            background-color: #e74c3c;
+        }
+        .btn-pdf:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-excel {
+            background-color: #217346;
+        }
+        .btn-excel:hover {
+            background-color: #1a5c38;
+        }
+
+        .order-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .order-section h3 {
+            margin-top: 0;
+            color: var(--primary-green);
+            border-bottom: 2px solid var(--primary-yellow);
+            padding-bottom: 5px;
+        }
+
+        .info-badge {
+            background: #e8f8f0;
+            border: 1px solid var(--primary-green);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #0b7a4a;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-badge span {
+            font-weight: bold;
+        }
+
+        .product-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+
+        .product-row select, .product-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .product-row button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: bold;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 600px) {
+            .product-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .product-row button {
+                width: 100%;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>વેદરાજ મસાલા - સેલ્સ ઓર્ડર</h1>
+        <p>Order Booking System</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('orderTab')">નવો ઓર્ડર લો</button>
+        <button class="tab-btn" onclick="openTab('addMerchantTab')">નવો વેપારી ઉમેરો</button>
+        <button class="tab-btn" onclick="openTab('addProductTab')">નવી પ્રોડક્ટ ઉમેરો</button>
+    </div>
+
+    <!-- TAB 1: ORDER SECTION -->
+    <div id="orderTab" class="tab-content active">
+        <div id="orderAlert" class="alert"></div>
+        
+        <!-- Date Time Location Badge -->
+        <div class="info-badge" id="infoBadge">
+            <div>📅 <span id="displayDate">તારીખ લોડ થઈ રહી છે...</span></div>
+            <div>⏰ <span id="displayTime">સમય લોડ થઈ રહ્યો છે...</span></div>
+            <div>📍 <span id="displayLocation">લોકેશન મેળવાઈ રહ્યું છે...</span></div>
+        </div>
+
+        <div class="order-section">
+            <h3>1. વેપારીની વિગતો</h3>
+            <div class="form-group">
+                <label for="merchantIdSearch">વેપારી નંબર (ID) નાખો:</label>
+                <input type="text" id="merchantIdSearch" class="form-control" placeholder="દા.ત. 101" oninput="fetchMerchantDetails()">
+                <small style="color: #666; display:block; margin-top:5px;">*નંબર નાખતા જ વેપારીની વિગતો આપોઆપ ભરાઈ જશે.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="mName">વેપારીનું નામ:</label>
+                <input type="text" id="mName" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="mMobile">મોબાઈલ નંબર:</label>
+                <input type="text" id="mMobile" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="mVillage">ગામ:</label>
+                <input type="text" id="mVillage" class="form-control" readonly>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h3>2. ઓર્ડર વિગતો</h3>
+            <div id="productContainer">
+                <!-- Product rows will be added here dynamically -->
+            </div>
+            <button class="btn btn-yellow" onclick="addProductRow()" style="margin-bottom: 15px;">+ બીજી પ્રોડક્ટ ઉમેરો</button>
+            
+            <div class="form-group">
+                <label for="totalAmount">કુલ રકમ (₹):</label>
+                <input type="number" id="totalAmount" class="form-control" placeholder="કુલ રકમ દાખલ કરો">
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <button class="btn" onclick="submitOrder()">ઓર્ડર સબમિટ કરો (અને WhatsApp મોકલો)</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-pdf" onclick="downloadPDF()">📄 PDF ડાઉનલોડ કરો</button>
+            <button class="btn btn-excel" onclick="downloadExcel()">📊 Excel ડાઉનલોડ કરો</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: ADD MERCHANT -->
+    <div id="addMerchantTab" class="tab-content">
+        <div id="merchantAlert" class="alert"></div>
+        <h3>નવો વેપારી ઉમેરો</h3>
+        <div class="form-group">
+            <label for="newMId">વેપારી ID:</label>
+            <input type="text" id="newMId" class="form-control" placeholder="દા.ત. 105">
+        </div>
+        <div class="form-group">
+            <label for="newMName">વેપારીનું નામ:</label>
+            <input type="text" id="newMName" class="form-control" placeholder="નામ દાખલ કરો">
+        </div>
+        <div class="form-group">
+            <label for="newMMobile">મોબાઈલ નંબર:</label>
+            <input type="text" id="newMMobile" class="form-control" placeholder="10 અંકનો નંબર">
+        </div>
+        <div class="form-group">
+            <label for="newMVillage">ગામ:</label>
+            <input type="text" id="newMVillage" class="form-control" placeholder="ગામનું નામ">
+        </div>
+        <button class="btn" onclick="saveMerchant()">વેપારી સેવ કરો</button>
+    </div>
+
+    <!-- TAB 3: ADD PRODUCT -->
+    <div id="addProductTab" class="tab-content">
+        <div id="productAlert" class="alert"></div>
+        <h3>નવી પ્રોડક્ટ ઉમેરો</h3>
+        <div class="form-group">
+            <label for="newPName">પ્રોડક્ટનું નામ:</label>
+            <input type="text" id="newPName" class="form-control" placeholder="દા.ત. હળદર પાવડર">
+        </div>
+        <div class="form-group">
+            <label for="newPPack">પેકિંગ સાઈઝ:</label>
+            <select id="newPPack" class="form-control">
+                <option value="50g">50g</option>
+                <option value="100g">100g</option>
+                <option value="200g">200g</option>
+                <option value="500g">500g</option>
+                <option value="1kg">1kg</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="newPPrice">ભાવ (₹):</label>
+            <input type="number" id="newPPrice" class="form-control" placeholder="ભાવ દાખલ કરો">
+        </div>
+        <button class="btn" onclick="saveProduct()">પ્રોડક્ટ સેવ કરો</button>
+    </div>
+</div>
+
+<script>
+    // --- Database Simulation (Local Storage) ---
+    let merchants = JSON.parse(localStorage.getItem('vedraj_merchants')) || [
+        { id: '101', name: 'શ્રી રામ કિરાણા સ્ટોર', mobile: '9876543210', village: 'રાજકોટ' },
+        { id: '102', name: 'મહાદેવ જનરલ સ્ટોર', mobile: '9123456789', village: 'જામનગર' }
+    ];
+
+    let products = JSON.parse(localStorage.getItem('vedraj_products')) || [
+        { id: 1, name: 'હળદર પાવડર', pack: '100g', price: 40 },
+        { id: 2, name: 'લાલ મરચું પાવડર', pack: '100g', price: 60 },
+        { id: 3, name: 'ધાણા જીરું પાવડર', pack: '200g', price: 80 },
+        { id: 4, name: 'ગરમ મસાલા', pack: '50g', price: 50 }
+    ];
+
+    if(!localStorage.getItem('vedraj_merchants')) localStorage.setItem('vedraj_merchants', JSON.stringify(merchants));
+    if(!localStorage.getItem('vedraj_products')) localStorage.setItem('vedraj_products', JSON.stringify(products));
+
+    // --- Global variables for Date, Time, Location ---
+    let currentDateTime = '';
+    let currentLocation = 'લોકેશન મળ્યું નથી';
+
+    // --- Capture Date & Time ---
+    function updateDateTime() {
+        const now = new Date();
+        
+        // Format Date: DD-MM-YYYY
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const dateStr = `${day}-${month}-${year}`;
+
+        // Format Time: HH:MM AM/PM
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+
+        currentDateTime = `${dateStr} ${timeStr}`;
+        document.getElementById('displayDate').textContent = dateStr;
+        document.getElementById('displayTime').textContent = timeStr;
+    }
+
+    // --- Capture Location ---
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(5);
+                    const lon = position.coords.longitude.toFixed(5);
+                    currentLocation = `Lat: ${lat}, Lon: ${lon}`;
+                    document.getElementById('displayLocation').textContent = currentLocation;
+                },
+                (error) => {
+                    currentLocation = 'લોકેશન મળ્યું નથી (Permission Denied)';
+                    document.getElementById('displayLocation').textContent = currentLocation;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            currentLocation = 'આ બ્રાઉઝર લોકેશન સપોર્ટ કરતું નથી';
+            document.getElementById('displayLocation').textContent = currentLocation;
+        }
+    }
+
+    // Update time every minute (optional)
+    setInterval(updateDateTime, 60000);
+
+    // --- Tab Switching Logic ---
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- Alert Helper ---
+    function showAlert(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.className = `alert alert-${type}`;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    // --- Merchant Auto-Fill Logic ---
+    function fetchMerchantDetails() {
+        const idInput = document.getElementById('merchantIdSearch').value.trim();
+        const nameInput = document.getElementById('mName');
+        const mobileInput = document.getElementById('mMobile');
+        const villageInput = document.getElementById('mVillage');
+
+        if(idInput === '') {
+            nameInput.value = '';
+            mobileInput.value = '';
+            villageInput.value = '';
+            return;
+        }
+
+        const merchant = merchants.find(m => m.id === idInput);
+        if(merchant) {
+            nameInput.value = merchant.name;
+            mobileInput.value = merchant.mobile;
+            villageInput.value = merchant.village;
+        } else {
+            nameInput.value = 'વેપારી મળ્યો નથી';
+            mobileInput.value = '';
+            villageInput.value = '';
+        }
+    }
+
+    // --- Order Section Logic ---
+    function addProductRow() {
+        const container = document.getElementById('productContainer');
+        const row = document.createElement('div');
+        row.className = 'product-row';
+        
+        let productOptions = '<option value="">પ્રોડક્ટ પસંદ કરો</option>';
+        products.forEach(p => {
+            productOptions += `<option value="${p.id}" data-price="${p.price}" data-name="${p.name}" data-pack="${p.pack}">${p.name} (${p.pack}) - ₹${p.price}</option>`;
+        });
+
+        row.innerHTML = `
+            <select class="p-select" onchange="updateRowPrice(this)">
+                ${productOptions}
+            </select>
+            <input type="number" class="p-qty" placeholder="Qty" min="1" value="1" oninput="calculateTotal()">
+            <input type="text" class="p-price" placeholder="કિંમત" readonly>
+            <button onclick="removeRow(this)">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function removeRow(btn) {
+        btn.parentElement.remove();
+        calculateTotal();
+    }
+
+    function updateRowPrice(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const price = selectedOption.getAttribute('data-price') || '';
+        const row = selectElement.parentElement;
+        row.querySelector('.p-price').value = price;
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        document.querySelectorAll('.product-row').forEach(row => {
+            const price = parseFloat(row.querySelector('.p-price').value) || 0;
+            const qty = parseFloat(row.querySelector('.p-qty').value) || 0;
+            total += (price * qty);
+        });
+        document.getElementById('totalAmount').value = total;
+    }
+
+    // --- Data Collection Helper ---
+    function getOrderData() {
+        const mId = document.getElementById('merchantIdSearch').value;
+        const mName = document.getElementById('mName').value;
+        const mMobile = document.getElementById('mMobile').value;
+        const mVillage = document.getElementById('mVillage').value;
+        const total = document.getElementById('totalAmount').value;
+
+        if(!mId || mName === 'વેપારી મળ્યો નથી') {
+            showAlert('orderAlert', 'કૃપા કરીને સાચો વેપારી નંબર દાખલ કરો.', 'danger');
+            return null;
+        }
+
+        if(!total || total <= 0) {
+            showAlert('orderAlert', 'કૃપા કરીને ઓર્ડરની વિગતો ભરો.', 'danger');
+            return null;
+        }
+
+        const items = [];
+        document.querySelectorAll('.product-row').forEach(row => {
+            const select = row.querySelector('.p-select');
+            const selectedOption = select.options[select.selectedIndex];
+            if(selectedOption.value) {
+                items.push({
+                    name: selectedOption.getAttribute('data-name'),
+                    pack: selectedOption.getAttribute('data-pack'),
+                    price: parseFloat(selectedOption.getAttribute('data-price')),
+                    qty: parseFloat(row.querySelector('.p-qty').value) || 0,
+                    total: (parseFloat(selectedOption.getAttribute('data-price')) * (parseFloat(row.querySelector('.p-qty').value) || 0))
+                });
+            }
+        });
+
+        return {
+            merchantId: mId,
+            merchantName: mName,
+            mobile: mMobile,
+            village: mVillage,
+            items: items,
+            totalAmount: total,
+            dateTime: currentDateTime,
+            location: currentLocation
+        };
+    }
+
+    // --- Submit Order (WhatsApp Share) ---
+    function submitOrder() {
+        const order = getOrderData();
+        if(!order) return;
+
+        // WhatsApp Message Formatting
+        let message = `*વેદરાજ મસાલા - ઓર્ડર*\n\n`;
+        message += `*તારીખ/સમય:* ${order.dateTime}\n`;
+        message += `*લોકેશન:* ${order.location}\n\n`;
+        message += `*વેપારી:* ${order.merchantName}\n`;
+        message += `*ગામ:* ${order.village}\n`;
+        message += `*મોબાઈલ:* ${order.mobile}\n\n`;
+        message += `*ઓર્ડર વિગતો:*\n`;
+        
+        order.items.forEach((item, index) => {
+            message += `${index + 1}. ${item.name} (${item.pack}) - ${item.qty} x ₹${item.price} = ₹${item.total}\n`;
+        });
+        
+        message += `\n*કુલ રકમ: ₹${order.totalAmount}*`;
+        message += `\n\nઆભાર! વેદરાજ મસાલા`;
+
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappNumber = order.mobile.length === 10 ? '91' + order.mobile : order.mobile;
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+        
+        window.open(whatsappUrl, '_blank');
+        
+        showAlert('orderAlert', 'ઓર્ડર સફળતાપૂર્વક સબમિટ થયો! WhatsApp ખૂલી રહ્યું છે...', 'success');
+    }
+
+    // --- Download PDF ---
+    function downloadPDF() {
+        const order = getOrderData();
+        if(!order) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(13, 158, 96);
+        doc.text("Vedraj Masala", 105, 20, null, null, "center");
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Sales Order Receipt", 105, 30, null, null, "center");
+        
+        doc.setLineWidth(0.5);
+        doc.line(20, 35, 190, 35);
+
+        // Date, Time, Location
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Date/Time: ${order.dateTime}`, 20, 43);
+        doc.text(`Location: ${order.location}`, 20, 49);
+
+        // Merchant Details
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Merchant ID: ${order.merchantId}`, 20, 60);
+        doc.text(`Merchant Name: ${order.merchantName}`, 20, 67);
+        doc.text(`Mobile: ${order.mobile}`, 20, 74);
+        doc.text(`Village: ${order.village}`, 20, 81);
+
+        // Table Header
+        let yPos = 95;
+        doc.setFillColor(13, 158, 96);
+        doc.setTextColor(255, 255, 255);
+        doc.rect(20, yPos - 5, 170, 10, 'F');
+        doc.text("Product", 25, yPos);
+        doc.text("Pack", 85, yPos);
+        doc.text("Qty", 115, yPos);
+        doc.text("Price", 140, yPos);
+        doc.text("Total", 165, yPos);
+
+        // Table Rows
+        doc.setTextColor(0, 0, 0);
+        yPos += 10;
+        order.items.forEach(item => {
+            doc.text(item.name, 25, yPos);
+            doc.text(item.pack, 85, yPos);
+            doc.text(item.qty.toString(), 115, yPos);
+            doc.text(`Rs.${item.price}`, 140, yPos);
+            doc.text(`Rs.${item.total}`, 165, yPos);
+            yPos += 10;
+        });
+
+        // Grand Total
+        yPos += 5;
+        doc.line(20, yPos, 190, yPos);
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Grand Total: Rs. ${order.totalAmount}`, 140, yPos);
+
+        // Footer
+        yPos += 20;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Thank you for your business!", 105, yPos, null, null, "center");
+
+        doc.save(`Vedraj_Order_${order.merchantName}.pdf`);
+        showAlert('orderAlert', 'PDF ડાઉનલોડ થઈ રહી છે...', 'success');
+    }
+
+    // --- Download Excel ---
+    function downloadExcel() {
+        const order = getOrderData();
+        if(!order) return;
+
+        const excelData = [
+            ["Vedraj Masala - Sales Order"],
+            [],
+            ["Date/Time", order.dateTime],
+            ["Location", order.location],
+            [],
+            ["Merchant ID", order.merchantId],
+            ["Merchant Name", order.merchantName],
+            ["Mobile", order.mobile],
+            ["Village", order.village],
+            [],
+            ["Product", "Pack", "Qty", "Price", "Total"]
+        ];
+
+        order.items.forEach(item => {
+            excelData.push([item.name, item.pack, item.qty, item.price, item.total]);
+        });
+
+        excelData.push([]);
+        excelData.push(["", "", "", "Grand Total", order.totalAmount]);
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+        ws['!cols'] = [
+            { wch: 25 },
+            { wch: 10 },
+            { wch: 8 },
+            { wch: 10 },
+            { wch: 12 }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, "Order");
+        XLSX.writeFile(wb, `Vedraj_Order_${order.merchantName}.xlsx`);
+        showAlert('orderAlert', 'Excel ફાઈલ ડાઉનલોડ થઈ રહી છે...', 'success');
+    }
+
+    // --- Add Merchant Logic ---
+    function saveMerchant() {
+        const id = document.getElementById('newMId').value.trim();
+        const name = document.getElementById('newMName').value.trim();
+        const mobile = document.getElementById('newMMobile').value.trim();
+        const village = document.getElementById('newMVillage').value.trim();
+
+        if(!id || !name || !mobile || !village) {
+            showAlert('merchantAlert', 'બધી માહિતી ભરવી જરૂરી છે.', 'danger');
+            return;
+        }
+
+        if(merchants.some(m => m.id === id)) {
+            showAlert('merchantAlert', 'આ ID પહેલેથી જ અસ્તિત્વમાં છે.', 'danger');
+            return;
+        }
+
+        merchants.push({ id, name, mobile, village });
+        localStorage.setItem('vedraj_merchants', JSON.stringify(merchants));
+        
+        showAlert('merchantAlert', 'નવો વેપારી સફળતાપૂર્વક ઉમેરાયો!', 'success');
+        
+        document.getElementById('newMId').value = '';
+        document.getElementById('newMName').value = '';
+        document.getElementById('newMMobile').value = '';
+        document.getElementById('newMVillage').value = '';
+    }
+
+    // --- Add Product Logic ---
+    function saveProduct() {
+        const name = document.getElementById('newPName').value.trim();
+        const pack = document.getElementById('newPPack').value;
+        const price = document.getElementById('newPPrice').value.trim();
+
+        if(!name || !price) {
+            showAlert('productAlert', 'બધી માહિતી ભરવી જરૂરી છે.', 'danger');
+            return;
+        }
+
+        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+        products.push({ id: newId, name, pack, price: parseFloat(price) });
+        localStorage.setItem('vedraj_products', JSON.stringify(products));
+        
+        showAlert('productAlert', 'નવી પ્રોડક્ટ સફળતાપૂર્વક ઉમેરાઈ!', 'success');
+        
+        document.getElementById('newPName').value = '';
+        document.getElementById('newPPrice').value = '';
+    }
+
+    // --- Initialize on Load ---
+    window.onload = function() {
+        addProductRow();
+        updateDateTime();
+        getLocation();
+    };
+</script>
+
+</body>
+</html>
